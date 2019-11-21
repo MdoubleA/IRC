@@ -21,6 +21,7 @@ class Chat(Protocol):
     def connectionLost(self, reason):  # make original
         if self.user_name in self.client_list:
             del self.client_list[self.user_name]
+        self.transport.loseConnection()
 
     def dataReceived(self, data):
         if self.phase == "GREET":

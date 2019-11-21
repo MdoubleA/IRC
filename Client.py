@@ -1,6 +1,5 @@
 from twisted.internet.protocol import Protocol
-#from twisted.protocols import basic
-from sys import stdout
+from sys import stdout, stdin
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
 from twisted.application.internet import ClientService
@@ -34,6 +33,9 @@ class Messanger(Protocol):
         self.transport.write(data)
         self.prompt()
 
+    def connectionLost(self, depart_mssg):
+        self.transport.write(depart_mssg)
+        self.transport.loseConnection()
 
 class Client(Protocol):
     def __init__(self):
@@ -117,46 +119,31 @@ class Client(Protocol):
             room_name = data[5:].decode()
             stdout.write("Welcome " + self.user_name + " to " + room_name + ".\n")  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             self.room_name = room_name
-            #self.init_messaging()
             self.messanger = Messanger(self)
             stdio.StandardIO(self.messanger)
 
     def send_mesage(self, data):
-        self.transport.write(b"MESS!" + buffered_payload_len(self.room_name, 8).encode() + self.room_name.encode() + b"\n" +self.user_name.encode() + b": " + data)
-
-#///////////////////////////////////////////////////////////
-    def init_messaging(self):
-        mssg = input("Enter Message: ")
-        if mssg == "REMOVE ME FROM THE ROOM!!!":
-            stdout.write("Girl bye.")
-            self.converse()
-            return
-        mssg = "MESS!" + buffered_payload_len(self.room_name, 8) + self.room_name + self.user_name + ": " + mssg
-        self.transport.write(mssg.encode())
+        if data.decode() != "I'M LEAVING THE ROOM!\n":
+            self.transport.write(b"MESS!" + buffered_payload_len(self.room_name, 8).encode()
+                                          + self.room_name.encode()
+                                          + b"\n"
+                                          + self.user_name.encode()
+                                          + b": "
+                                          + data)
+        else:
+            depart_mssg = self.user_name + " is leaving the room. Good bye.\n"
+            self.messanger.connectionLost(depart_mssg.encode())
+            #self.converse()
+            mssg = stdin.readline()
+            stdout.write(mssg + "\n") # stdio seems to be broken
 
     def catch_message(self, data):
         self.messanger.dataSend(data)
 
-
-
-#////////////////////////////////////////////////////////////////
     def catch_create(self, data):
         mssg = {"NACK": "No. Try again.\n", "ACK": "We've made your room.\n"}
         stdout.write(mssg[data.decode()])
         self.converse()
-
-    '''
-        def catch_message(self, data):  # Assume one room at a time.
-            stdout.write(data.decode() + "\n")
-
-            mssg = input("Enter Message: ")
-            if mssg == "REMOVE ME FROM THE ROOM!!!":
-                stdout.write("Girl bye.")
-                self.converse()
-                return
-            mssg = "MESS!" + buffered_payload_len(self.room_name, 8) + self.room_name + self.user_name + ": " + mssg
-            self.transport.write(mssg.encode())
-    '''
 
     def panic(self):
         stdout.write("PANIC!!!!\n")
