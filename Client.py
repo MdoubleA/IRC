@@ -15,6 +15,22 @@ def buffered_payload_len(payload, offset):
     buffer = offset - len(str(len(payload)))
     return "0"*buffer + str(len(payload))
 
+class Messanger(Protocol):
+    def __init__(self, client):
+        self.client = client
+
+    def connectionMade(self):
+        self.transport.write(b"Enter message: ")
+
+    def dataReceived(self, data):
+        self.client.send_mesage(data)
+
+    def dataSend(self, data):
+        self.transport.write(data)
+
+
+
+
 class Client(Protocol):
     def __init__(self):
         self.phase = "GREET"
@@ -95,21 +111,17 @@ class Client(Protocol):
             self.converse()
         else:
             room_name = data[5:].decode()
-            stdout.write("Welcome " + self.user_name + " to " + room_name + ".\n")  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            mssg = input("Enter Message: ")
-
-            if mssg == "REMOVE ME FROM THE ROOM!!!":
-                stdout.write("Girl bye.")  # !!!!!!!!!!!!!!!!!!!!
-                self.converse()
-                return
-
+            stdout.write("Welcome " + self.user_name + " to " + room_name + ".\n")  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             self.room_name = room_name
-            mssg = "MESS!" + buffered_payload_len(room_name, 8) + room_name + self.user_name + ": " + mssg
-            self.transport.write(mssg.encode())
+            #self.init_messaging()
+            self.messanger = Messanger(self)
+            stdio.StandardIO(self.messanger)
 
-    def catch_message(self, data):  # Assume one room at a time.
-        stdout.write(data.decode() + "\n")
+    def send_mesage(self, data):
+        self.transport.write(b"MESS!" + buffered_payload_len(self.room_name, 8).encode() + self.room_name.encode() + b"\n" +self.user_name.encode() + b" " + data)
 
+#///////////////////////////////////////////////////////////
+    def init_messaging(self):
         mssg = input("Enter Message: ")
         if mssg == "REMOVE ME FROM THE ROOM!!!":
             stdout.write("Girl bye.")
@@ -118,10 +130,29 @@ class Client(Protocol):
         mssg = "MESS!" + buffered_payload_len(self.room_name, 8) + self.room_name + self.user_name + ": " + mssg
         self.transport.write(mssg.encode())
 
+    def catch_message(self, data):
+        self.messanger.dataSend(data)
+
+
+
+#////////////////////////////////////////////////////////////////
     def catch_create(self, data):
         mssg = {"NACK": "No. Try again.\n", "ACK": "We've made your room.\n"}
         stdout.write(mssg[data.decode()])
         self.converse()
+
+    '''
+        def catch_message(self, data):  # Assume one room at a time.
+            stdout.write(data.decode() + "\n")
+
+            mssg = input("Enter Message: ")
+            if mssg == "REMOVE ME FROM THE ROOM!!!":
+                stdout.write("Girl bye.")
+                self.converse()
+                return
+            mssg = "MESS!" + buffered_payload_len(self.room_name, 8) + self.room_name + self.user_name + ": " + mssg
+            self.transport.write(mssg.encode())
+    '''
 
     def panic(self):
         stdout.write("PANIC!!!!\n")
