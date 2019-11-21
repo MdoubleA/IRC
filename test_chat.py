@@ -1,9 +1,31 @@
+import unittest
+import nose
 from unittest import TestCase
+
+from Server import Chat
 
 
 class TestChat(TestCase):
+    def test_basic(self):
+        input = "blah"
+        expect = "fuck off steve"
+        actual = "hi steve"
+
+        assert(actual == expect)
+        #self.fail()
+
     def test_connectionLost(self):
-        self.fail()
+        input = "blah"
+        expect = "fuck off steve"
+        actual = "hi steve"
+
+        chat = Chat()
+        chat.client_list = ['steve', 'bob', 'michael']
+
+
+        chat.connectionLost()
+        assert(actual == expect)
+        #self.fail()
 
     def test_dataReceived(self):
         self.fail()

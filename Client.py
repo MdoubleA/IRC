@@ -19,16 +19,20 @@ class Messanger(Protocol):
     def __init__(self, client):
         self.client = client
 
+    def prompt(self):
+        self.transport.write(b"You: ")
+
     def connectionMade(self):
         self.transport.write(b"Begin Messaging\n")
+        self.prompt()
 
     def dataReceived(self, data):
         self.client.send_mesage(data)
+        self.prompt()
 
     def dataSend(self, data):
         self.transport.write(data)
-
-
+        self.prompt()
 
 
 class Client(Protocol):
