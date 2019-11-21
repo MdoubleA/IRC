@@ -20,7 +20,7 @@ class Messanger(Protocol):
         self.client = client
 
     def connectionMade(self):
-        self.transport.write(b"Enter message: ")
+        self.transport.write(b"Begin Messaging\n")
 
     def dataReceived(self, data):
         self.client.send_mesage(data)
@@ -118,7 +118,7 @@ class Client(Protocol):
             stdio.StandardIO(self.messanger)
 
     def send_mesage(self, data):
-        self.transport.write(b"MESS!" + buffered_payload_len(self.room_name, 8).encode() + self.room_name.encode() + b"\n" +self.user_name.encode() + b" " + data)
+        self.transport.write(b"MESS!" + buffered_payload_len(self.room_name, 8).encode() + self.room_name.encode() + b"\n" +self.user_name.encode() + b": " + data)
 
 #///////////////////////////////////////////////////////////
     def init_messaging(self):
