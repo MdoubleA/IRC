@@ -1,9 +1,10 @@
 from twisted.internet.protocol import Protocol
-from sys import stdout, stdin
+import sys
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
 from twisted.application.internet import ClientService
 from twisted.internet import stdio
+import os
 
 
 serverIP = "10.0.0.58" # Stevens ip address #"10.200.185.199"  # school ip address  #"192.168.0.19" # Bob's ip  #"10.0.0.58" #Home ip address
@@ -13,6 +14,7 @@ serverPort = 8007
 def buffered_payload_len(payload, offset):
     buffer = offset - len(str(len(payload)))
     return "0"*buffer + str(len(payload))
+
 
 class Messanger(Protocol):
     def __init__(self, client):
@@ -35,7 +37,7 @@ class Messanger(Protocol):
 
     def connectionLost(self, depart_mssg):
         self.transport.write(depart_mssg)
-        self.transport.loseConnection()
+
 
 class Client(Protocol):
     def __init__(self):
@@ -92,6 +94,8 @@ class Client(Protocol):
     '''
     def menu(self):
         menu = input("\nList 0\nCreate 1\nJoin Room 2\n")
+        #sys.stdout.write("\nList 0\nCreate 1\nJoin Room 2\n")
+        #menu = sys.stdin.readline()
 
         if menu[0] == '0':
             menu = "LIST!"
@@ -105,21 +109,22 @@ class Client(Protocol):
     def catch_list(self, data):
         message_length = int(data[0:8].decode())  # 5 byte header 8 byte message length
         if message_length == 0:
-            stdout.write("No chat rooms")
+            sys.stdout.write("No chat rooms")
         else:
             message = data[8:].decode()
-            stdout.write(message)
+            sys.stdout.write(message)
         self.converse()
 
     def catch_join(self, data):
         if data[:5].decode() == "NACK!":
-            stdout.write("No, the room does not exist.\n")
+            sys.stdout.write("No, the room does not exist.\n")
             self.converse()
         else:
             room_name = data[5:].decode()
-            stdout.write("Welcome " + self.user_name + " to " + room_name + ".\n")  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            sys.stdout.write("Welcome " + self.user_name + " to " + room_name + ".\n")  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             self.room_name = room_name
             self.messanger = Messanger(self)
+            self.file_no = sys.stdin
             stdio.StandardIO(self.messanger)
 
     def send_mesage(self, data):
@@ -133,23 +138,24 @@ class Client(Protocol):
         else:
             depart_mssg = self.user_name + " is leaving the room. Good bye.\n"
             self.messanger.connectionLost(depart_mssg.encode())
-            #self.converse()
-            mssg = stdin.readline()
-            stdout.write(mssg + "\n") # stdio seems to be broken
+            self.messanger = None
+            sys.stdin = sys.__stdin__#os.open(0, "utf-8")
+            sys.stdout = sys.__stdout__
+            self.converse()
 
     def catch_message(self, data):
         self.messanger.dataSend(data)
 
     def catch_create(self, data):
         mssg = {"NACK": "No. Try again.\n", "ACK": "We've made your room.\n"}
-        stdout.write(mssg[data.decode()])
+        sys.stdout.write(mssg[data.decode()])
         self.converse()
 
     def panic(self):
-        stdout.write("PANIC!!!!\n")
+        sys.stdout.write("PANIC!!!!\n")
 
 def end():
-    stdout.write("turning off\n")
+    sys.stdout.write("turning off\n")
     reactor.stop()
 
 
