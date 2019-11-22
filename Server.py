@@ -2,12 +2,15 @@ from twisted.internet.protocol import Protocol
 from twisted.internet.endpoints import TCP4ServerEndpoint
 from twisted.internet import reactor
 from twisted.internet.protocol import Factory
-from sys import stdout
+from twisted.internet import stdio
+import sys
 
 
 def buffered_payload_len(payload, offset):
     buffer = offset - len(str(len(payload)))
     return "0"*buffer + str(len(payload))
+
+server_port = 8007
 
 
 # This is the protocol that translates the applications messages
@@ -131,7 +134,8 @@ class Chat(Protocol):
             self.transport.write(b'ACK!!')
 
     def panic(self):
-        stdout.write("PANIC!!!!")
+        sys.stdout = sys.__stdout__
+        sys.stdout.write("PANIC!!!!")
         reactor.stop()
 
 
@@ -139,12 +143,14 @@ class ChatFactory(Factory):
     def __init__(self):
         self.client_list = {} # maps user names to Chat instances
         self.chatroom_list = {}
+        self.off_switch = ServerControl(self)
+        stdio.StandardIO(self.off_switch)
 
     def buildProtocol(self, addr):
         return Chat(self.client_list, self.chatroom_list)
 
 
-endpoint = TCP4ServerEndpoint(reactor, 8007)  # A TCP socket
+endpoint = TCP4ServerEndpoint(reactor, server_port)  # A TCP socket
 endpoint.listen(ChatFactory())
 reactor.run()
 
