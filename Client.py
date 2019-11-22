@@ -35,8 +35,9 @@ class Messanger(Protocol):
         self.transport.write(data)
         self.prompt()
 
-    def connectionLost(self, depart_mssg):
-        self.transport.write(depart_mssg)
+    def connectionLost(self):
+        self.transport.write(b" ")
+        return
 
 
 class Client(Protocol):
@@ -93,9 +94,9 @@ class Client(Protocol):
     Need to double check that we validate input.
     '''
     def menu(self):
-        menu = input("\nList 0\nCreate 1\nJoin Room 2\n")
-        #sys.stdout.write("\nList 0\nCreate 1\nJoin Room 2\n")
-        #menu = sys.stdin.readline()
+        #menu = input("\nList 0\nCreate 1\nJoin Room 2\n")
+        sys.stdout.write("\nList 0\nCreate 1\nJoin Room 2\n")
+        menu = sys.stdin.readline()
 
         if menu[0] == '0':
             menu = "LIST!"
@@ -121,14 +122,13 @@ class Client(Protocol):
             self.converse()
         else:
             room_name = data[5:].decode()
-            sys.stdout.write("Welcome " + self.user_name + " to " + room_name + ".\n")  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            sys.stdout.write("Welcome " + self.user_name + " to " + room_name + ".\n")
             self.room_name = room_name
             self.messanger = Messanger(self)
-            self.file_no = sys.stdin
             stdio.StandardIO(self.messanger)
 
     def send_mesage(self, data):
-        if data.decode() != "I'M LEAVING THE ROOM!\n":
+        if data.decode() != "IM LEAVING THE ROOM\n":
             self.transport.write(b"MESS!" + buffered_payload_len(self.room_name, 8).encode()
                                           + self.room_name.encode()
                                           + b"\n"
@@ -136,11 +136,11 @@ class Client(Protocol):
                                           + b": "
                                           + data)
         else:
-            depart_mssg = self.user_name + " is leaving the room. Good bye.\n"
-            self.messanger.connectionLost(depart_mssg.encode())
+            self.messanger.connectionLost()
             self.messanger = None
-            sys.stdin = sys.__stdin__#os.open(0, "utf-8")
+            sys.stdin = sys.__stdin__
             sys.stdout = sys.__stdout__
+            self.transport.write(b"LEAVE" + self.room_name.encode())
             self.converse()
 
     def catch_message(self, data):
