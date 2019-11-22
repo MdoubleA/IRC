@@ -51,10 +51,6 @@ class Chat(Protocol):
 
     def leave(self, data):
         self.chatroom_list[data.decode()].remove(self.client_list[self.user_name])
-        stdout.write(self.user_name)
-        stdout.write("\n------\n")
-        for a in self.chatroom_list[data.decode()]:
-            stdout.write(a.user_name + " ")
 
     def get_user_room_names(self, data):  # pass bytes get string
         user_name_length = int(data[:8].decode())

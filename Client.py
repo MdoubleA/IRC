@@ -141,7 +141,7 @@ class Client(Protocol):
             sys.stdin = sys.__stdin__
             sys.stdout = sys.__stdout__
             self.transport.write(b"LEAVE" + self.room_name.encode())
-            self.converse()
+            #self.converse()
 
     def catch_message(self, data):
         self.messanger.dataSend(data)
