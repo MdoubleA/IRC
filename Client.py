@@ -91,21 +91,34 @@ class Client(Protocol):
         self.converse()
 
     '''
-    Need to double check that we validate input.
+    Displays options to user, gets their selection, and translates it to the appropriate application layer
+    protocol. Validates user input. 
     '''
     def menu(self):
-        #menu = input("\nList 0\nCreate 1\nJoin Room 2\n")
-        sys.stdout.write("\nList 0\nCreate 1\nJoin Room 2\n")
-        menu = sys.stdin.readline()
+        options = ["list\n", "create\n", "join\n"]
+        menu = "\nTo select an action type the command to the left of the colon.\n" \
+               + "List available rooms : " + options[0] \
+               + "Create a room        : " + options[1] \
+               + "Join a room          : " + options[2] \
+               + "Your selection: "
 
-        if menu[0] == '0':
-            menu = "LIST!"
-        elif menu[0] == '1':
-            menu = "CREAT" + buffered_payload_len(self.user_name, 8) + self.user_name + input("Enter Room Name: ")
-        elif menu[0] == '2':
-            menu = "JOIN!" + buffered_payload_len(self.user_name, 8) + self.user_name + input("Enter Room Name: ")
+        sys.stdout.write(menu)
+        user_selection = sys.stdin.readline()
 
-        return menu.encode()
+        while user_selection not in options:
+            sys.stdout.write("\nThat selection is unviable. Try again.\nYour selection: ")
+            user_selection = sys.stdin.readline()
+
+        if user_selection == options[0]:
+            user_selection = "LIST!"
+
+        elif user_selection == options[1]:
+            user_selection = "CREAT" + buffered_payload_len(self.user_name, 8) + self.user_name + input("Enter Room Name: ")
+
+        elif user_selection == options[2]:
+            user_selection = "JOIN!" + buffered_payload_len(self.user_name, 8) + self.user_name + input("Enter Room Name: ")
+
+        return user_selection.encode()
 
     def catch_list(self, data):
         message_length = int(data[0:8].decode())  # 5 byte header 8 byte message length
