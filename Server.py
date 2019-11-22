@@ -143,8 +143,6 @@ class ChatFactory(Factory):
     def __init__(self):
         self.client_list = {} # maps user names to Chat instances
         self.chatroom_list = {}
-        self.off_switch = ServerControl(self)
-        stdio.StandardIO(self.off_switch)
 
     def buildProtocol(self, addr):
         return Chat(self.client_list, self.chatroom_list)
