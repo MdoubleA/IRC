@@ -4,7 +4,6 @@ from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint, connectProtocol
 from twisted.application.internet import ClientService
 from twisted.internet import stdio
-import os
 
 
 serverIP = "10.0.0.58" # Stevens ip address #"10.200.185.199"  # school ip address  #"192.168.0.19" # Bob's ip  #"10.0.0.58" #Home ip address
@@ -71,6 +70,7 @@ class Client(Protocol):
             'CREAT': self.catch_create,
             'JOIN!': self.catch_join,
             'MESS!': self.catch_message,
+            'LEAVE': self.catch_leave,
         }
 
         switcher.get(data[:5].decode(), self.panic)(data[5:])
@@ -141,7 +141,9 @@ class Client(Protocol):
             sys.stdin = sys.__stdin__
             sys.stdout = sys.__stdout__
             self.transport.write(b"LEAVE" + self.room_name.encode())
-            #self.converse()
+
+    def catch_leave(self, data):  # Data == None. Will change if implement ACK!!/NACK
+        self.converse()
 
     def catch_message(self, data):
         self.messanger.dataSend(data)

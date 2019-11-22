@@ -51,6 +51,7 @@ class Chat(Protocol):
 
     def leave(self, data):
         self.chatroom_list[data.decode()].remove(self.client_list[self.user_name])
+        self.transport.write(b"LEAVE")  # May want to consider ack/nack. But have to be in room to send a LEAVE. So ok.
 
     def get_user_room_names(self, data):  # pass bytes get string
         user_name_length = int(data[:8].decode())
