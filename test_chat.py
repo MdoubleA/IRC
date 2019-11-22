@@ -4,9 +4,10 @@ from unittest import TestCase
 
 from Server import Chat
 
-
 class TestChat(TestCase):
     def test_basic(self):
+        
+        # get rid of profanity
         input = "blah"
         expect = "fuck off steve"
         actual = "hi steve"
