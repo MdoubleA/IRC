@@ -71,6 +71,7 @@ class Client(Protocol):
             'JOIN!': self.catch_join,
             'MESS!': self.catch_message,
             'LEAVE': self.catch_leave,
+            'TERM!': self.catch_terminate,
         }
 
         switcher.get(data[:5].decode(), self.panic)(data[5:])
@@ -90,16 +91,22 @@ class Client(Protocol):
         self.phase = "CONVO"
         self.converse()
 
+    def catch_terminate(self, data):  # data isACK!! and left for consistency.
+        self.transport.loseConnection()
+        sys.stdout.write("\n\nSee ya later.\n\n")
+        reactor.stop()
+
     '''
     Displays options to user, gets their selection, and translates it to the appropriate application layer
     protocol. Validates user input. 
     '''
     def menu(self):
-        options = ["list\n", "create\n", "join\n"]
+        options = ["list\n", "create\n", "join\n", "exit\n"]
         menu = "\nTo select an action type the command to the left of the colon.\n" \
                + "List available rooms : " + options[0] \
                + "Create a room        : " + options[1] \
                + "Join a room          : " + options[2] \
+               + "Shout down app       : " + options[3] \
                + "Your selection: "
 
         sys.stdout.write(menu)
@@ -113,10 +120,15 @@ class Client(Protocol):
             user_selection = "LIST!"
 
         elif user_selection == options[1]:
-            user_selection = "CREAT" + buffered_payload_len(self.user_name, 8) + self.user_name + input("Enter Room Name: ")
+            user_selection = "CREAT" + buffered_payload_len(self.user_name, 8) + self.user_name + \
+                             input("Enter Room Name: ")
 
         elif user_selection == options[2]:
-            user_selection = "JOIN!" + buffered_payload_len(self.user_name, 8) + self.user_name + input("Enter Room Name: ")
+            user_selection = "JOIN!" + buffered_payload_len(self.user_name, 8) + self.user_name + \
+                             input("Enter Room Name: ")
+
+        elif user_selection == options[3]:
+            user_selection = "TERM!"
 
         return user_selection.encode()
 
@@ -169,17 +181,10 @@ class Client(Protocol):
     def panic(self):
         sys.stdout.write("PANIC!!!!\n")
 
-def end():
-    sys.stdout.write("turning off\n")
-    reactor.stop()
-
 
 socket = TCP4ClientEndpoint(reactor, serverIP, serverPort)
 proto = connectProtocol(socket, Client())
 theConnection = ClientService(socket, proto)
-
 theConnection.startService()
-
-#reactor.callLater(20, end)
 reactor.run()  # Begin running Twisted's OS interacting processes.
 

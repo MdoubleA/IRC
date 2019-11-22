@@ -21,7 +21,15 @@ class Chat(Protocol):
     def connectionLost(self, reason):  # make original
         if self.user_name in self.client_list:
             del self.client_list[self.user_name]
-        self.transport.loseConnection()
+
+        tar_room_name = None
+        for room_name, room in self.chatroom_list.items():
+            if self in room:
+                tar_room_name = room_name
+                break
+
+        if tar_room_name:
+            self.chatroom_list[tar_room_name].remove(self)
 
     def dataReceived(self, data):
         if self.phase == "GREET":
@@ -45,6 +53,7 @@ class Chat(Protocol):
             "JOIN!": self.join,
             "MESS!": self.message,
             "LEAVE": self.leave,
+            "TERM!": self.terminate,
         }
 
         switcher.get(data[:5].decode(), self.panic)(data[5:])
@@ -52,6 +61,9 @@ class Chat(Protocol):
     def leave(self, data):
         self.chatroom_list[data.decode()].remove(self.client_list[self.user_name])
         self.transport.write(b"LEAVE")  # May want to consider ack/nack. But have to be in room to send a LEAVE. So ok.
+
+    def terminate(self, data):  # data is intentionally None.
+        self.transport.write(b"TERM!ACK!!")
 
     def get_user_room_names(self, data):  # pass bytes get string
         user_name_length = int(data[:8].decode())
