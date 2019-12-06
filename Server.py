@@ -63,16 +63,10 @@ class Chat(Protocol):
 
     def leave(self, data):
         self.chatroom_list[data.decode()].remove(self.client_list[self.user_name])
-        self.transport.write(b"LEAVE")  # May want to consider ack/nack. But have to be in room to send a LEAVE. So ok.
+        self.transport.write(b"LEAVE")
 
     def terminate(self, data):  # data is intentionally None.
         self.transport.write(b"TERM!ACK!!")
-
-    def get_user_room_names(self, data):  # pass bytes get string
-        user_name_length = int(data[:8].decode())
-        user_name = data[8:user_name_length].decode()
-        room_name = data[8+user_name_length:].decode()
-        return user_name, room_name
 
     def message(self, data):
         name_len = int(data[:8].decode())
@@ -88,7 +82,7 @@ class Chat(Protocol):
         user_name = data[8:8+name_len].decode()
         room_name = data[8+name_len:].decode()
 
-        if room_name not in self.chatroom_list:  # duplicate chat room names
+        if room_name not in self.chatroom_list:  # Guard against duplicate chat room names.
             self.transport.write(b"JOIN!NACK!")
             return
 
@@ -141,7 +135,7 @@ class Chat(Protocol):
 
 class ChatFactory(Factory):
     def __init__(self):
-        self.client_list = {} # maps user names to Chat instances
+        self.client_list = {}  # maps user names to Chat instances
         self.chatroom_list = {}
 
     def buildProtocol(self, addr):

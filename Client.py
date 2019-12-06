@@ -6,7 +6,7 @@ from twisted.application.internet import ClientService
 from twisted.internet import stdio
 
 
-serverIP = "10.0.0.58" # Stevens ip address #"10.200.185.199"  # school ip address  #"192.168.0.19" # Bob's ip  #"10.0.0.58" #Home ip address
+serverIP = "10.0.0.58"
 serverPort = 8007
 
 
@@ -70,7 +70,7 @@ class Client(Protocol):
     def handle_GREET(self, data):
         switcher = {
             'WHAT!': self.get_credentials,
-            'NACK!': self.get_credentials,  # time out mechanism
+            'NACK!': self.get_credentials,  # Time out mechanism needed.
             'ACK!!': self.phase_transition,
         }
 
@@ -89,7 +89,7 @@ class Client(Protocol):
         switcher.get(data[:5].decode(), self.panic)(data[5:])
 
     def get_credentials(self):
-        self.user_name = input("Type user name: ")  # APPLICATION
+        self.user_name = input("Type user name: ")
         data = "MAKE!" + self.user_name
         self.transport.write(data.encode())
 
@@ -103,7 +103,7 @@ class Client(Protocol):
         self.phase = "CONVO"
         self.converse()
 
-    def catch_terminate(self, data):  # data isACK!! and left for consistency.
+    def catch_terminate(self, data):  # data is intentionally left blank.
         self.user_exit = True
         self.transport.loseConnection()
 
@@ -124,7 +124,7 @@ class Client(Protocol):
         user_selection = sys.stdin.readline()
 
         while user_selection not in options:
-            sys.stdout.write("\nThat selection is unviable. Try again.\nYour selection: ")
+            sys.stdout.write("\nThat selection is unavailable. Try again.\nYour selection: ")
             user_selection = sys.stdin.readline()
 
         if user_selection == options[0]:
