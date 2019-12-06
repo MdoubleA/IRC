@@ -2,7 +2,6 @@ from twisted.internet.protocol import Protocol
 from twisted.internet.endpoints import TCP4ServerEndpoint
 from twisted.internet import reactor
 from twisted.internet.protocol import Factory
-from twisted.internet import stdio
 import sys
 
 
@@ -22,7 +21,7 @@ class Chat(Protocol):
         self.user_name = None
         self.phase = "GREET"
 
-    def connectionLost(self, reason):  # make original
+    def connectionLost(self, reason):
         if self.user_name in self.client_list:
             del self.client_list[self.user_name]
 

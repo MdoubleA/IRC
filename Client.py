@@ -43,10 +43,22 @@ class Client(Protocol):
     def __init__(self):
         self.phase = "GREET"
         self.user_name = None
+        self.user_exit = False
 
     def connectionMade(self):
         data = b"HELLO"
         self.transport.write(data)
+
+    def connectionLost(self, reason):
+        sys.stdout = sys.__stdout__
+
+        if self.user_exit:
+            sys.stdout.write("\n\nSee ya later!\n\n")
+        else:
+            sys.stdout.write("\n\nWoops! Our servers are down, and that's a big problem. "
+                             "You'll have to check in later to chat. See ya later...\n\n")
+
+        reactor.stop()
 
     def dataReceived(self, data):
         if self.phase == "GREET":
@@ -92,9 +104,8 @@ class Client(Protocol):
         self.converse()
 
     def catch_terminate(self, data):  # data isACK!! and left for consistency.
+        self.user_exit = True
         self.transport.loseConnection()
-        sys.stdout.write("\n\nSee ya later.\n\n")
-        reactor.stop()
 
     '''
     Displays options to user, gets their selection, and translates it to the appropriate application layer
